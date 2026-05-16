@@ -19,9 +19,7 @@ jobs:
           python-version: '3.10'
 
       - name: Install system dependencies
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y python3-pip build-essential git ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev zip unzip openjdk-17-jdk autoconf automake libtool-bin pkg-config cmake ninja-build
+        run: sudo apt-get update -y && sudo apt-get install -y python3-pip build-essential git ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev zip unzip openjdk-17-jdk autoconf automake libtool-bin pkg-config cmake ninja-build
 
       - name: Install Python build tools
         run: |
@@ -43,49 +41,11 @@ jobs:
           yes | $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses || true
           $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager "platforms;android-31" "build-tools;31.0.0" "platform-tools"
 
-      - name: Write buildozer spec
-        run: |
-          rm -f buildozer.spec
-          python3 -c "
-          spec = '''[app]
-title = MTro AC Helper
-package.name = mtroachelper
-package.domain = org.mohammed.mtro
-source.dir = .
-source.include_exts = py,png,jpg,kv,atlas
-version = 1.0
-entrypoint = main.py
-requirements = python3,kivy==2.2.1,kivymd==1.2.0,pillow==9.5.0
-icon.filename = %(source.dir)s/icon.png
-presplash.filename = %(source.dir)s/icon.png
-orientation = portrait
-android.permissions = INTERNET
-android.minapi = 26
-android.api = 31
-android.ndk = 25b
-android.ndk_path = /root/.buildozer/android/platform/android-ndk-r25b
-android.sdk_path = /root/.buildozer/android/platform/android-sdk
-android.archs = arm64-v8a
-android.allow_backup = True
-fullscreen = 0
-
-[buildozer]
-log_level = 2
-warn_on_root = 1
-'''
-open('buildozer.spec', 'w').write(spec)
-print('spec written')
-"
-          cat buildozer.spec
-
       - name: Build APK
-        run: |
-          yes | buildozer android debug 2>&1
+        run: yes | buildozer android debug 2>&1
 
       - name: Check APK
-        run: |
-          ls -la bin/ || echo "bin folder not found"
-          find . -name "*.apk" 2>/dev/null || echo "No APK found"
+        run: find . -name "*.apk" 2>/dev/null && ls -la bin/ || echo "No APK found"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
