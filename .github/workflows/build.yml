@@ -26,7 +26,7 @@ jobs:
           pip install --upgrade pip setuptools wheel
           pip install cython==0.29.33
           pip install buildozer==1.5.0
-          pip install python-for-android==2023.9.4
+          pip install python-for-android==2023.9.3
 
       - name: Set up Android NDK and SDK
         run: |
