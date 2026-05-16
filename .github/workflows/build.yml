@@ -1,0 +1,93 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:  # allows manual trigger from GitHub UI
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            python3-pip \
+            build-essential \
+            git \
+            ffmpeg \
+            libsdl2-dev \
+            libsdl2-image-dev \
+            libsdl2-mixer-dev \
+            libsdl2-ttf-dev \
+            libportmidi-dev \
+            libswscale-dev \
+            libavformat-dev \
+            libavcodec-dev \
+            zlib1g-dev \
+            libgstreamer1.0-dev \
+            gstreamer1.0-plugins-base \
+            gstreamer1.0-plugins-good \
+            zip \
+            unzip \
+            openjdk-17-jdk \
+            autoconf \
+            automake \
+            libtool-bin \
+            pkg-config
+
+      - name: Install Buildozer and dependencies
+        run: |
+          pip install --upgrade pip
+          pip install buildozer==1.5.0
+          pip install cython==0.29.33
+
+      - name: Create buildozer.spec
+        run: |
+          cat > buildozer.spec << 'EOF'
+          [app]
+          title = MTro AC Helper
+          package.name = mtroachelper
+          package.domain = org.mohammed.mtro
+          source.dir = .
+          source.include_exts = py,png,jpg,kv,atlas
+          version = 1.0
+          entrypoint = main.py
+          requirements = python3,kivy==2.2.1,kivymd==1.2.0,pillow
+          icon.filename = %(source.dir)s/icon.png
+          presplash.filename = %(source.dir)s/icon.png
+          orientation = portrait
+          android.permissions = INTERNET
+          android.minapi = 26
+          android.api = 31
+          android.ndk = 25b
+          android.sdk = 31
+          android.archs = arm64-v8a
+          android.allow_backup = True
+          fullscreen = 0
+
+          [buildozer]
+          log_level = 2
+          warn_on_root = 1
+          EOF
+
+      - name: Build APK
+        run: |
+          yes | buildozer android debug
+
+      - name: Upload APK as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: MTro-AC-Helper-APK
+          path: bin/*.apk
+          retention-days: 30
