@@ -21,29 +21,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y \
-            python3-pip \
-            build-essential \
-            git \
-            ffmpeg \
-            libsdl2-dev \
-            libsdl2-image-dev \
-            libsdl2-mixer-dev \
-            libsdl2-ttf-dev \
-            libportmidi-dev \
-            libswscale-dev \
-            libavformat-dev \
-            libavcodec-dev \
-            zlib1g-dev \
-            zip \
-            unzip \
-            openjdk-17-jdk \
-            autoconf \
-            automake \
-            libtool-bin \
-            pkg-config \
-            cmake \
-            ninja-build
+          sudo apt-get install -y python3-pip build-essential git ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev zip unzip openjdk-17-jdk autoconf automake libtool-bin pkg-config cmake ninja-build
 
       - name: Install Python build tools
         run: |
@@ -52,30 +30,24 @@ jobs:
           pip install buildozer==1.5.0
           pip install python-for-android==2023.9.4
 
-      - name: Set up Android SDK and NDK
+      - name: Set up Android NDK and SDK
         run: |
           mkdir -p $HOME/.buildozer/android/platform
           cd $HOME/.buildozer/android/platform
-
           wget -q https://dl.google.com/android/repository/android-ndk-r25b-linux.zip
           unzip -q android-ndk-r25b-linux.zip
-          echo "NDK ready"
-
           mkdir -p android-sdk/cmdline-tools
           wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
           unzip -q commandlinetools-linux-9477386_latest.zip -d android-sdk/cmdline-tools
           mv android-sdk/cmdline-tools/cmdline-tools android-sdk/cmdline-tools/latest
-          echo "SDK tools ready"
-
           yes | $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses || true
           $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager "platforms;android-31" "build-tools;31.0.0" "platform-tools"
-          echo "SDK ready"
 
-      - name: Create buildozer.spec
+      - name: Write buildozer spec
         run: |
           rm -f buildozer.spec
-          cat > buildozer.spec << 'SPECEOF'
-[app]
+          python3 -c "
+          spec = '''[app]
 title = MTro AC Helper
 package.name = mtroachelper
 package.domain = org.mohammed.mtro
@@ -100,8 +72,10 @@ fullscreen = 0
 [buildozer]
 log_level = 2
 warn_on_root = 1
-SPECEOF
-          echo "=== buildozer.spec ==="
+'''
+open('buildozer.spec', 'w').write(spec)
+print('spec written')
+"
           cat buildozer.spec
 
       - name: Build APK
@@ -120,4 +94,3 @@ SPECEOF
           path: bin/*.apk
           retention-days: 30
           if-no-files-found: warn
- 
