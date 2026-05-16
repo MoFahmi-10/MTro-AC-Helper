@@ -1,56 +1,31 @@
-name: Build Android APK
-
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
+name: Build APK
+on: [push, pull_request]
 
 jobs:
   build:
     runs-on: ubuntu-22.04
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
-      - name: Set up Python 3.10
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python_version: '3.10'
 
-      - name: Install system dependencies
-        run: sudo apt-get update -y && sudo apt-get install -y python3-pip build-essential git ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev zip unzip openjdk-17-jdk autoconf automake libtool-bin pkg-config cmake ninja-build
-
-      - name: Install Python build tools
+      - name: Install dependencies
         run: |
-          pip install --upgrade pip setuptools wheel
-          pip install cython==0.29.33
-          pip install buildozer==1.5.0
-          pip install python-for-android==2023.9.3
+          sudo apt update
+          sudo apt install -y git zip unzip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev
+          pip install --upgrade pip
+          pip install buildozer cython==0.29.33
 
-      - name: Set up Android NDK and SDK
+      - name: Build with Buildozer
         run: |
-          mkdir -p $HOME/.buildozer/android/platform
-          cd $HOME/.buildozer/android/platform
-          wget -q https://dl.google.com/android/repository/android-ndk-r25b-linux.zip
-          unzip -q android-ndk-r25b-linux.zip
-          mkdir -p android-sdk/cmdline-tools
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
-          unzip -q commandlinetools-linux-9477386_latest.zip -d android-sdk/cmdline-tools
-          mv android-sdk/cmdline-tools/cmdline-tools android-sdk/cmdline-tools/latest
-          yes | $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses || true
-          $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager "platforms;android-31" "build-tools;31.0.0" "platform-tools"
-
-      - name: Build APK
-        run: yes | buildozer android debug 2>&1
-
-      - name: Check APK
-        run: find . -name "*.apk" 2>/dev/null && ls -la bin/ || echo "No APK found"
+          yes | buildozer android debug
+        continue-on-error: false
 
       - name: Upload APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: MTro-AC-Helper-APK
           path: bin/*.apk
-          retention-days: 30
-          if-no-files-found: warn
